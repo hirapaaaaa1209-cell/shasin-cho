@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="写真帳">
+<meta name="theme-color" content="#1a5fa0">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%231a5fa0'/%3E%3Ccircle cx='256' cy='220' r='90' fill='none' stroke='white' stroke-width='28'/%3E%3Ccircle cx='256' cy='220' r='50' fill='white'/%3E%3Ctext x='256' y='400' text-anchor='middle' font-family='sans-serif' font-size='72' font-weight='bold' fill='white'%3E写真帳%3C/text%3E%3C/svg%3E">
+<!-- ① アイコンCSS: 非同期読み込み (起動ブロックなし) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" media="print" onload="this.media='all'">
+<!-- XLSXはExcel出力ボタン押下時に遅延読み込み -->
+<title>路面補修 写真帳</title>
+<style>
+:root{--blue:#1a5fa0;--green:#1a7a4a;--purple:#6b3fa0;--bg:#f2f2f7;--card:#fff;--t1:#1c1c1e;--t2:#636366;--t3:#aeaeb2;--sep:rgba(60,60,67,.18);--sep2:rgba(60,60,67,.29);--r:12px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:#1a5fa0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+.hdr{background:var(--blue);color:#fff;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hdr-t{font-size:17px;font-weight:600}.hdr-s{font-size:12px;opacity:.75;margin-top:1px}
+.hdr-r{display:flex;gap:6px;align-items:center}
+#main{padding:12px;padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+.btmbar{background:var(--card);border-top:1px solid var(--sep);padding:8px 16px;padding-bottom:max(8px,env(safe-area-inset-bottom));position:sticky;bottom:0;z-index:100;display:flex;gap:8px;box-shadow:0 -2px 8px rgba(0,0,0,.07)}
+.btmbar .btn{flex:1;justify-content:center;min-height:44px}
+.btn{padding:8px 13px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:38px;-webkit-appearance:none;touch-action:manipulation}
+.btn:active{opacity:.65}.btn:disabled{opacity:.4;pointer-events:none}
+.btn-white{background:rgba(255,255,255,.2);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-green{background:var(--green);color:#fff;font-size:13px;padding:6px 11px;min-height:32px}
+.btn-purple{background:var(--purple);color:#fff;font-size:13px;padding:6px 11px;min-height:32px}
+.btn-gray{background:var(--bg);color:var(--t2);border:1px solid var(--sep2)}
+.btn-sm{font-size:12px;padding:5px 9px;min-height:28px}
+.data-bar{background:var(--card);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;border:1px solid var(--sep)}
+.data-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.data-sub{font-size:11px;color:var(--t3);margin-top:5px}
+.def-sec{background:var(--card);border-radius:var(--r);margin-bottom:10px;border:1px solid var(--sep)}
+.def-hd{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;cursor:pointer;touch-action:manipulation;user-select:none}
+.def-hd-t{font-size:14px;font-weight:600}
+.def-bd{padding:0 13px 12px;display:flex;flex-direction:column;gap:8px}
+.row2{display:flex;gap:8px}
+.fld{display:flex;flex-direction:column;gap:3px}
+.fld label{font-size:12px;color:var(--t2);font-weight:500}
+.fld input,.fld select,.fld textarea,
+.edit-fld input,.edit-fld select,.edit-fld textarea{border:1px solid var(--sep2);border-radius:8px;padding:9px 11px;font-size:16px;font-family:inherit;background:var(--bg);color:var(--t1);-webkit-appearance:none;outline:none;width:100%}
+.fld select,.edit-fld select{font-size:15px}
+.dz{background:var(--card);border-radius:var(--r);border:2px dashed var(--sep2);padding:18px;text-align:center;cursor:pointer;margin-bottom:10px;touch-action:manipulation}
+.dz:active,.dz.over{background:#e8f0fa}
+.dz-ico{font-size:30px;color:var(--t3)}.dz-t{font-size:15px;color:var(--t2);margin-top:5px;font-weight:500}.dz-s{font-size:12px;color:var(--t3);margin-top:2px}
+/* ── サムネイル帯 ── */
+#strip-wrap{background:var(--card);border-radius:var(--r);margin-bottom:10px;padding:10px 12px;display:none;border:1px solid var(--sep)}
+#strip-lbl{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:7px}
+#strip{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px;-webkit-user-select:none;user-select:none}
+#strip::-webkit-scrollbar{height:3px}#strip::-webkit-scrollbar-thumb{background:var(--sep2);border-radius:2px}
+#strip-hint{font-size:11px;color:var(--t3);margin-top:5px}
+.sthumb{flex-shrink:0;width:68px;-webkit-touch-callout:none;touch-action:manipulation;cursor:grab}
+.sthumb-img{width:68px;height:51px;border-radius:6px;overflow:hidden;border:2px solid transparent;position:relative}
+.sthumb-img>*{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
+.sthumb-img .maptile,.sthumb-img .blanktile{display:flex;align-items:center;justify-content:center;font-size:18px}
+.sthumb-img .maptile{background:#dde8d8}
+.sthumb-img .blanktile{background:#e8e8e8;color:#bbb;font-size:22px}
+.sthumb-badge{position:absolute;top:2px;left:2px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;pointer-events:none}
+.sthumb-gps{width:7px;height:7px;border-radius:50%;background:var(--green);position:absolute;top:3px;right:3px;pointer-events:none}
+.sthumb-lbl{font-size:10px;color:var(--t3);text-align:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.sthumb.being-dragged .sthumb-img{opacity:.2}
+.sthumb.drop-here .sthumb-img{border:2px solid var(--blue)}
+/* ── カードリスト ── */
+#plist{border:1px solid var(--sep);border-radius:var(--r);overflow:hidden;background:var(--card)}
+#plist:empty{display:none}
+.pcard{border-bottom:1px solid var(--sep)}.pcard:last-child{border-bottom:none}
+.pcard.ismap{border-left:3px solid var(--green)}.pcard.loaded{border-left:3px solid #f0a020}
+.pcard.blank-card{border-left:3px solid #bbb}
+.pcard-hd{display:flex;align-items:center;gap:9px;padding:9px 11px;min-height:64px;cursor:pointer;touch-action:manipulation}
+.pcard-hd:active{background:var(--bg)}
+.pthumb{width:60px;height:45px;border-radius:6px;overflow:hidden;flex-shrink:0;background:var(--bg)}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pmapthumb{width:60px;height:45px;border-radius:6px;background:#dde8d8;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px}
+.pblanktile{width:60px;height:45px;border-radius:6px;background:#e8e8e8;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px;color:#ccc}
+.pinfo{flex:1;min-width:0}
+.pl1{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.pnum{width:18px;height:18px;background:var(--blue);color:#fff;border-radius:50%;font-size:9px;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ppg{font-size:10px;color:var(--t3);flex-shrink:0}
+.ptitle{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.ptitle.empty{color:var(--t3);font-weight:400}
+.pl2{font-size:11px;color:var(--t3);display:flex;gap:5px;align-items:center}
+.gps-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.gps-dot.ok{background:var(--green)}.gps-dot.ld{background:#aaa;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.pcard-r{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.prmbtn{padding:4px 8px;background:none;border:1px solid var(--sep2);border-radius:6px;color:var(--t3);font-size:13px;cursor:pointer;min-height:30px;touch-action:manipulation;line-height:1}
+.prmbtn:active{background:var(--bg)}
+.loaded-badge{font-size:9px;color:#f0a020;background:#fff8e7;padding:1px 5px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.pchev{color:var(--t3);font-size:14px;transition:transform .18s;flex-shrink:0;padding:2px}
+.pcard.open .pchev{transform:rotate(90deg)}
+.pcard-edit{display:none;padding:10px 12px;border-top:1px solid var(--sep);background:var(--bg);flex-direction:column;gap:8px}
+.pcard.open .pcard-edit{display:flex}
+.edit-row{display:flex;gap:8px}
+.edit-fld{display:flex;flex-direction:column;gap:3px}
+.edit-fld label{font-size:12px;color:var(--t2);font-weight:500}
+.edit-fld textarea{resize:vertical;min-height:54px}
+.chip{font-size:12px;padding:4px 9px;border-radius:10px;font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.chip-ok{background:#e8f8ee;color:var(--green)}.chip-no{background:var(--bg);color:var(--t2)}
+.gps-btns{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.man-inp{border:1px solid var(--sep2);border-radius:8px;padding:7px 9px;font-size:14px;font-family:inherit;background:var(--card);color:var(--t1);width:138px}
+.empty-state{text-align:center;padding:36px 20px;color:var(--t3)}.empty-state i{font-size:44px;display:block;margin-bottom:7px}.empty-state p{font-size:15px}
+/* ── ライトボックス ── */
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:10000;display:none;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+#lb-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;flex-shrink:0}
+#lb-cnt{color:rgba(255,255,255,.7);font-size:14px}
+#lb-cls{width:32px;height:32px;background:rgba(255,255,255,.18);border:none;border-radius:50%;color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+#lb-edt{background:rgba(255,255,255,.15);border:none;border-radius:7px;color:#fff;font-size:13px;padding:5px 11px;cursor:pointer;font-family:inherit;touch-action:manipulation}
+#lb-view{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:pan-y}
+#lb-img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+#lb-svg{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.lba{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:58px;background:rgba(255,255,255,.12);border:none;border-radius:7px;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+#lb-p{left:5px}#lb-n{right:5px}
+#lb-bot{flex-shrink:0;padding:11px 15px;background:rgba(0,0,0,.5)}
+#lb-ttl{color:#fff;font-size:15px;font-weight:600;margin-bottom:2px}
+#lb-meta{display:flex;gap:9px;flex-wrap:wrap}
+#lb-meta span{color:rgba(255,255,255,.6);font-size:13px;display:flex;align-items:center;gap:3px}
+#lb-gps{background:rgba(26,122,74,.35);border-radius:10px;padding:2px 8px}
+/* ② プレビューオーバーレイ: 画面フィット・1ページずつ */
+#ovl{position:fixed;inset:0;background:#1a1a1a;z-index:9999;display:none;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+#ovl-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;flex-shrink:0;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.1)}
+/* 閉じるボタン: 大きく・目立つ */
+#ovl-cls{background:#e74c3c;border:none;border-radius:9px;color:#fff;font-size:15px;font-weight:600;padding:10px 20px;cursor:pointer;min-height:46px;touch-action:manipulation;font-family:inherit;display:flex;align-items:center;gap:6px}
+#ovl-cls:active{background:#c0392b}
+#ovl-cnt{color:rgba(255,255,255,.85);font-size:15px;font-weight:500}
+#ovl-page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:10px 10px}
+#ovl-nav{display:flex;gap:8px;padding:10px 14px;flex-shrink:0;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.1)}
+.ovl-nb{flex:1;min-height:50px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;font-size:15px;font-weight:500;cursor:pointer;touch-action:manipulation;font-family:inherit}
+.ovl-nb:active{background:rgba(255,255,255,.22)}.ovl-nb:disabled{opacity:.25}
+/* プログレス */
+#prog{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20000;display:none;align-items:center;justify-content:center}
+.prog-box{background:#fff;border-radius:12px;padding:18px 26px;text-align:center;min-width:190px}
+.prog-box p{font-size:13px;color:var(--t2);margin-top:7px}
+/* ── SharePoint モーダル ── */
+#sp-cfg,#sp-pick{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20001;display:none;align-items:center;justify-content:center;padding:12px}
+.sp-box{background:#fff;border-radius:14px;width:100%;max-width:460px;display:flex;flex-direction:column;overflow:hidden;max-height:88vh}
+.sp-hd{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--sep);font-size:15px;font-weight:600;flex-shrink:0}
+.sp-hd button{background:none;border:none;font-size:20px;cursor:pointer;color:var(--t3);width:32px;height:32px;line-height:1;touch-action:manipulation}
+.sp-bd{padding:14px 16px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sp-note{font-size:12px;color:var(--t3);background:#f5f5f5;border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.5}
+.sp-note a{color:var(--blue)}
+#sp-list{flex:1;overflow-y:auto;max-height:340px;-webkit-overflow-scrolling:touch}
+.sp-item{padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--sep);font-size:14px;touch-action:manipulation}
+.sp-item:last-child{border-bottom:none}
+.sp-item:active{background:var(--bg)}
+.sp-foot{padding:10px 16px;border-top:1px solid var(--sep);display:flex;gap:8px;flex-shrink:0}
+.sp-bc{font-size:12px;color:var(--t2);padding:8px 16px;border-bottom:1px solid var(--sep);background:var(--bg);flex-shrink:0;min-height:32px;display:flex;align-items:center}
+/* 印刷 */
+@media print{
+body,#main{display:block!important;height:auto!important;overflow:visible!important;padding:0!important}
+.hdr,.btmbar,#screen-ui,#lb,#ovl,#prog{display:none!important}
+#pbook{display:block!important}
+@page{size:A4 portrait;margin:0}
+#pbook .pg{width:210mm;height:297mm;background-color:#808080!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-after:always;break-after:page;display:flex;flex-direction:column;padding:8mm;gap:5mm;overflow:hidden}
+#pbook .pc{flex:1;display:flex;gap:3mm;min-height:0;overflow:hidden}
+#pbook .pp{flex:0 0 63.5%;overflow:hidden;background:#ccc}
+#pbook .pp.blank{background:#e8e8e8!important}
+#pbook .pp>img{width:100%;height:100%;object-fit:cover;display:block}
+#pbook .pp>svg{width:100%;height:100%;display:block}
+#pbook .pi{flex:1;border:1.5px solid #111;background:#fff!important;display:flex;flex-direction:column;overflow:hidden;font-family:'Yu Gothic','MS Gothic','Hiragino Kaku Gothic ProN',sans-serif}
+#pbook .r{display:flex;border-bottom:1px solid #333;flex-shrink:0;height:9mm}
+#pbook .rt{flex:1;display:flex;border-bottom:1px solid #333;min-height:0}
+#pbook .pi>div:last-child{border-bottom:none!important}
+#pbook .lb{width:41%;flex-shrink:0;border-right:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;padding:.5mm 1mm;font-size:3mm;line-height:1.5;white-space:pre}
+#pbook .vl{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:.5mm 2mm;font-size:3.4mm;line-height:1.4;white-space:pre-line}
+#pbook .rt .lb{font-size:2.8mm;line-height:1.8}
+#pbook .rt .vl{font-size:4mm;line-height:1.5}
+}
+</style>
+</head>
+<body>
+<div id="screen-ui">
+<div class="hdr">
+  <div>
+    <div class="hdr-t"><i class="ti ti-camera"></i> 路面補修 写真帳</div>
+    <div class="hdr-s">GPS自動検出・AI黒板読取・施工位置図生成</div>
+  </div>
+  <div class="hdr-r">
+    <span id="clabel" style="font-size:12px;opacity:.9"></span>
+    <button class="btn btn-white" id="pvbtn" style="display:none" onclick="showPV()"><i class="ti ti-eye"></i> 確認</button>
+  </div>
+</div>
+<div id="main">
+  <div class="data-bar">
+    <div style="font-size:13px;font-weight:600;color:var(--t2)"><i class="ti ti-database" style="color:var(--blue)"></i> データ管理</div>
+    <div class="data-btns">
+      <button class="btn btn-gray btn-sm" id="savebtn" onclick="saveData()"><i class="ti ti-device-floppy"></i> 保存</button>
+      <button class="btn btn-gray btn-sm" onclick="g('lfi').click()"><i class="ti ti-folder-open"></i> 読込</button>
+      <button class="btn btn-gray btn-sm" onclick="exportExcel()"><i class="ti ti-table"></i> Excel</button>
+      <!-- ③ 空白挿入ボタン -->
+      <button class="btn btn-gray btn-sm" onclick="addBlankAtEnd()" title="3枚綴りのページ調整用"><i class="ti ti-square-plus"></i> 空白を追加</button>
+      <button class="btn btn-blue btn-sm" onclick="showSPRoot()"><i class="ti ti-cloud-upload"></i> SharePoint保存</button>
+      <button class="btn btn-gray btn-sm" onclick="g('sp-cfg').style.display='flex'" title="SharePoint設定"><i class="ti ti-settings-2"></i></button>
+    </div>
+    <div class="data-sub"><i class="ti ti-info-circle"></i> 空白ボタン: ページ調整用の空白スペースを末尾に追加します</div>
+  </div>
+  <input type="file" id="lfi" accept=".json" style="display:none" onchange="onLoadFile(this.files[0]);this.value=''">
+  <div class="def-sec">
+    <div class="def-hd" onclick="tglDef()">
+      <div class="def-hd-t"><i class="ti ti-settings" style="color:var(--t2)"></i> 共通設定</div>
+      <i class="ti ti-chevron-down" id="defchev" style="color:var(--t3);transition:transform .2s"></i>
+    </div>
+    <div class="def-bd" id="defbd" style="display:none">
+      <div class="row2">
+        <div class="fld" style="flex:0 0 95px"><label>路線番号</label><input id="dr" value="277"></div>
+        <div class="fld" style="flex:1"><label>撮影月日</label><input id="dd" value="2026年5月21日"></div>
+      </div>
+      <div class="fld"><label>工　種</label><input id="dk" value="路面補修工"></div>
+      <button class="btn btn-blue btn-sm" onclick="applyAll()" style="align-self:flex-start"><i class="ti ti-refresh"></i> 全写真に適用</button>
+    </div>
+  </div>
+  <div class="dz" id="dz" onclick="g('fi').click()"
+    ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+    ondrop="event.preventDefault();this.classList.remove('over');handleFiles(event.dataTransfer.files)">
+    <div class="dz-ico"><i class="ti ti-photo-plus"></i></div>
+    <div class="dz-t">写真を選択 / カメラで撮影</div>
+    <div class="dz-s"><i class="ti ti-map-pin"></i> GPS自動検出 &nbsp;<i class="ti ti-sparkles"></i> AI黒板読取</div>
+  </div>
+  <input type="file" id="fi" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files);this.value=''">
+  <div id="strip-wrap">
+    <div id="strip-lbl"><i class="ti ti-photos" style="color:var(--blue)"></i> 写真一覧 — タップで拡大</div>
+    <div id="strip"></div>
+    <div id="strip-hint"><i class="ti ti-hand-finger" style="color:var(--t3)"></i> 長押し+ドラッグで順番変更</div>
+  </div>
+  <div id="plist"></div>
+  <div id="empty" class="empty-state"><i class="ti ti-camera"></i><p>写真をアップロードしてください</p></div>
+</div>
+<div class="btmbar">
+  <button class="btn btn-blue" id="prbtn" disabled onclick="doPrint()"><i class="ti ti-file-text"></i> PDF出力</button>
+</div>
+</div>
+
+<!-- ライトボックス -->
+<div id="lb">
+  <div id="lb-bar">
+    <button id="lb-cls" onclick="closeLb()"><i class="ti ti-x"></i></button>
+    <span id="lb-cnt"></span>
+    <button id="lb-edt" onclick="goEdit()"><i class="ti ti-pencil"></i> 編集</button>
+  </div>
+  <div id="lb-view" ontouchstart="lbTS(event)" ontouchend="lbTE(event)">
+    <img id="lb-img" src="" alt="" style="display:none">
+    <div id="lb-svg" style="display:none"></div>
+    <button class="lba" id="lb-p" onclick="lbNav(-1)">‹</button>
+    <button class="lba" id="lb-n" onclick="lbNav(1)">›</button>
+  </div>
+  <div id="lb-bot">
+    <div id="lb-ttl"></div>
+    <div id="lb-meta"><span id="lb-rt"></span><span id="lb-dt"></span><span id="lb-gps" style="display:none"></span></div>
+  </div>
+</div>
+
+<!-- ② プレビューオーバーレイ: 1ページずつ表示 -->
+<div id="ovl">
+  <div id="ovl-hd">
+    <!-- 閉じるボタン: 赤色で目立つ・大きなタップ領域 -->
+    <button id="ovl-cls" onclick="document.getElementById('ovl').style.display='none'">
+      ✕ 閉じる
+    </button>
+    <span id="ovl-cnt" style="color:rgba(255,255,255,.9);font-size:15px;font-weight:600"></span>
+    <div style="width:90px"></div>
+  </div>
+  <div id="ovl-page"></div>
+  <div id="ovl-nav">
+    <button id="ovl-prev" class="ovl-nb" onclick="pvNav(-1)">‹ 前のページ</button>
+    <button id="ovl-next" class="ovl-nb" onclick="pvNav(1)">次のページ ›</button>
+  </div>
+</div>
+
+<div id="prog"><div class="prog-box"><i class="ti ti-loader" style="font-size:26px;color:var(--blue)"></i><p id="prog-msg">処理中...</p></div></div>
+<!-- SharePoint設定モーダル -->
+<div id="sp-cfg">
+  <div class="sp-box">
+    <div class="sp-hd">SharePoint 保存先設定 <button onclick="g('sp-cfg').style.display='none'">×</button></div>
+    <div class="sp-bd">
+      <div class="sp-note">
+        保存後に自動で開く <strong>SharePoint フォルダの URL</strong> を設定してください。<br>
+        ① SharePoint でフォルダを開く → ② アドレスバーのURLをコピー → ③ ここに貼り付け
+      </div>
+      <div class="fld">
+        <label>SharePoint フォルダ URL</label>
+        <input id="sp-url" type="url" placeholder="https://company.sharepoint.com/sites/...">
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--t3)">
+        ※ Azure Portal 等の設定は不要です
+      </div>
+    </div>
+    <div class="sp-foot">
+      <button class="btn btn-blue" onclick="saveSPCfg()" style="flex:1">保存</button>
+      <button class="btn btn-gray" onclick="g('sp-cfg').style.display='none'" style="flex:1">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="pbook" style="display:none"></div>
+
+<script>
+'use strict';
+let photos=[],uid=0,lbIdx=0,lbTX=0,pvCur=0;
+let _pt=null,_openId=null,_cThumbs=null,_dragEnd=0;
+const PRESETS=["施工位置図","安全管理\n交通誘導員配置","着工前","完成","細粒度アスコン\nタックコート\n乳剤塗布状況","細粒度アスコン\n舗設状況","細粒度アスコン\n転圧状況"];
+const g=id=>document.getElementById(id);
+const dv=id=>g(id)?.value.trim()||'';
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function tglDef(){const b=g('defbd'),c=g('defchev'),o=b.style.display==='none';b.style.display=o?'flex':'none';c.style.transform=o?'rotate(180deg)':'';}
+function showProg(m){g('prog').style.display='flex';g('prog-msg').textContent=m||'処理中...';}
+function hideProg(){g('prog').style.display='none';}
+
+// ── renderPrint (デバウンス) ──
+function debouncePrint(){clearTimeout(_pt);_pt=setTimeout(renderPrint,500);}
+function renderPrint(){
+  const bk=g('pbook');bk.innerHTML='';
+  for(let i=0;i<photos.length;i+=3){
+    const pg=document.createElement('div');pg.className='pg';
+    photos.slice(i,i+3).forEach(p=>{
+      const c=document.createElement('div');c.className='pc';
+      let pp;
+      if(p.type==='blank') pp=`<div class="pp blank"></div>`;
+      else if(p.isMap) pp=`<div class="pp">${p.mapSvg||''}</div>`;
+      else pp=`<div class="pp"><img src="${p.url||''}" alt=""></div>`;
+      c.innerHTML=pp+ibox(p);pg.appendChild(c);
+    });
+    while(pg.children.length<3)pg.appendChild(Object.assign(document.createElement('div'),{className:'pc'}));
+    bk.appendChild(pg);
+  }
+}
+function ibox(p){return`<div class="pi"><div class="r"><div class="lb">工　　種</div><div class="vl">${esc(p.koushu)}</div></div><div class="rt"><div class="lb">写　真\nタイトル</div><div class="vl">${esc(p.title)}</div></div><div class="r"><div class="lb">路線番号</div><div class="vl">${esc(p.route)}</div></div><div class="r"><div class="lb">撮影月日</div><div class="vl">${esc(p.date)}</div></div><div class="r"><div class="lb"></div><div class="vl"></div></div><div class="r"><div class="lb"></div><div class="vl"></div></div></div>`;}
+
+// ── upd: 対象DOMのみ更新 ──
+function upd(id,k,v){
+  const p=photos.find(x=>x.id===id);if(!p)return;
+  p[k]=v;
+  const card=g('card-'+id);
+  if(card){
+    if(k==='title'){const el=card.querySelector('.ptitle');if(el){el.textContent=v.split('\n')[0]||'（未設定）';el.classList.toggle('empty',!v);}}
+    if(k==='route'||k==='date'){const el=card.querySelector('.pl2-text');if(el)el.textContent=p.route+' · '+p.date;}
+    const edit=card.querySelector('.pcard-edit');
+    if(edit?.dataset.init&&card.classList.contains('open')){
+      edit.querySelectorAll(`[data-field="${k}"]`).forEach(inp=>{
+        if(inp.tagName==='SELECT')inp.value=PRESETS.includes(v)?v:'';
+        else if(inp!==document.activeElement)inp.value=v;
+      });
+    }
+  }
+  if(k==='title'&&_cThumbs){const idx=photos.indexOf(p);_cThumbs[idx]?.querySelector('.sthumb-lbl')&&(_cThumbs[idx].querySelector('.sthumb-lbl').textContent=v.split('\n')[0]||`写真${idx+1}`);}
+  debouncePrint();
+}
+
+// ── イベント委譲 ──
+g('plist').addEventListener('click',e=>{
+  const card=e.target.closest('.pcard');if(!card)return;
+  const id=+card.dataset.id;
+  if(e.target.closest('.prmbtn')){removePhoto(id);return;}
+  if(e.target.closest('[data-action="photo"]')){openLb(photos.findIndex(p=>p.id===id));return;}
+  if(e.target.closest('[data-action="map"]')){insertMap(id);return;}
+  if(e.target.closest('[data-action="ai"]')){readBoard(id);return;}
+  if(e.target.closest('[data-action="blankbefore"]')){insertBlank(id);return;}
+  if(!e.target.closest('.pcard-edit'))toggleExpand(id);
+},{passive:true});
+g('plist').addEventListener('input',e=>{
+  const card=e.target.closest('.pcard');if(!card)return;
+  const field=e.target.dataset.field;if(field)upd(+card.dataset.id,field,e.target.value);
+},{passive:true});
+
+// ── カード展開 ──
+function toggleExpand(id){
+  const card=g('card-'+id);if(!card)return;
+  const open=card.classList.contains('open');
+  if(_openId&&_openId!==id){const oc=g('card-'+_openId);if(oc)oc.classList.remove('open');}
+  if(!open){
+    const edit=card.querySelector('.pcard-edit');
+    if(edit&&!edit.dataset.init){const p=photos.find(x=>x.id===id);if(p){edit.innerHTML=buildEdit(p);edit.dataset.init='1';}}
+    card.classList.add('open');_openId=id;
+    requestAnimationFrame(()=>card.scrollIntoView({behavior:'smooth',block:'nearest'}));
+  }else{card.classList.remove('open');_openId=null;}
+}
+function buildEdit(p){
+  const pre=PRESETS.map(t=>`<option value="${esc(t)}"${p.title===t?' selected':''}>${t.replace(/\n/g,' / ')}</option>`).join('');
+  // 空白カードの編集フィールド
+  if(p.type==='blank'){return `<div class="edit-row"><div class="edit-fld" style="flex:0 0 95px"><label>路線番号</label><input value="${esc(p.route)}" data-field="route"></div><div class="edit-fld" style="flex:1"><label>工　種</label><input value="${esc(p.koushu)}" data-field="koushu"></div></div><div class="edit-fld"><label>撮影月日</label><input value="${esc(p.date)}" data-field="date"></div><div class="edit-fld"><label>写真タイトル（任意）</label><input value="${esc(p.title)}" data-field="title" placeholder="任意で入力"></div><div style="font-size:12px;color:var(--t3);background:#f5f5f5;border-radius:6px;padding:8px 10px;margin-top:2px"><i class="ti ti-info-circle"></i> この空白スペースは写真なしのスロットです。3枚綴りのページ調整用です。</div>`;}
+  let gHtml='';
+  if(p.isMap)gHtml=`<span class="chip chip-ok"><i class="ti ti-map-2"></i> ${p.gps.lat.toFixed(4)}, ${p.gps.lon.toFixed(4)}</span>`;
+  else if(p.gpsState==='ok')gHtml=`<span class="chip chip-ok"><i class="ti ti-map-pin"></i> N${p.gps.lat.toFixed(4)}, E${p.gps.lon.toFixed(4)}</span><div class="gps-btns"><button class="btn btn-green btn-sm" data-action="map"><i class="ti ti-map-pin-plus"></i> 施工位置図を挿入</button><button class="btn btn-purple btn-sm" data-action="ai"${p.aiDone?' disabled':''}><i class="ti ti-sparkles"></i> AI読取${p.aiDone?' ✓':''}</button></div>`;
+  else if(p.gpsState==='none')gHtml=`<span class="chip chip-no"><i class="ti ti-map-pin-off"></i> GPS未検出</span><div class="gps-btns"><button class="btn btn-purple btn-sm" data-action="ai"${p.aiDone?' disabled':''}><i class="ti ti-sparkles"></i> AI読取</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center"><input type="number" step="0.0001" placeholder="緯度 43.0551" value="${esc(p.manLat)}" data-field="manLat" class="man-inp"><input type="number" step="0.0001" placeholder="経度 141.4468" value="${esc(p.manLon)}" data-field="manLon" class="man-inp"><button class="btn btn-green btn-sm" data-action="map"><i class="ti ti-map"></i> 地図挿入</button></div>`;
+  return`<div class="edit-row"><div class="edit-fld" style="flex:0 0 95px"><label>路線番号</label><input value="${esc(p.route)}" data-field="route"></div><div class="edit-fld" style="flex:1"><label>工　種</label><input value="${esc(p.koushu)}" data-field="koushu"></div></div><div class="edit-fld"><label>撮影月日</label><input value="${esc(p.date)}" data-field="date"></div><div class="edit-fld"><label>写真タイトル</label><select data-field="title" style="margin-bottom:5px"><option value="">▼ プリセットから選択</option>${pre}</select><textarea data-field="title" placeholder="タイトルを入力（改行可）">${esc(p.title)}</textarea></div><div style="display:flex;flex-direction:column;gap:6px">${gHtml}</div><div style="padding-top:4px;border-top:1px solid var(--sep);margin-top:4px"><button class="btn btn-gray btn-sm" data-action="blankbefore" style="width:100%"><i class="ti ti-square-plus"></i> この写真の前に空白スペースを挿入</button></div>`;
+}
+
+// ── ③ 空白スペース挿入 ──
+function addBlankAtEnd(){
+  const ref=photos[photos.length-1];
+  photos.push({id:++uid,type:'blank',url:null,file:null,name:'',
+    date:ref?.date||'',route:ref?.route||'',koushu:ref?.koushu||'',title:'',
+    gps:null,gpsState:'none',isMap:false,mapSvg:null,manLat:'',manLon:'',aiDone:false});
+  renderAll();renderPrint();updateCounts();
+}
+function insertBlank(beforeId){
+  const idx=photos.findIndex(x=>x.id===beforeId);
+  const ref=photos[idx]||photos[0];
+  const blank={id:++uid,type:'blank',url:null,file:null,name:'',
+    date:'',route:'',koushu:'',title:'',
+    gps:null,gpsState:'none',isMap:false,mapSvg:null,manLat:'',manLon:'',aiDone:false};
+  if(idx>=0)photos.splice(idx,0,blank);else photos.push(blank);
+  if(_openId)_openId=null;renderAll();renderPrint();updateCounts();
+}
+
+// ── ドラッグ並び替え ──
+const DS={on:false,idx:-1,ghost:null,target:-1,timer:null,startX:0,offX:0};
+function stripTS(e,idx){if(Date.now()-_dragEnd<300)return;DS.startX=e.touches[0].clientX;clearTimeout(DS.timer);DS.timer=setTimeout(()=>_bDrag(DS.startX,idx),240);}
+function onStripTM(e){if(DS.timer&&!DS.on&&Math.abs(e.touches[0].clientX-DS.startX)>6){clearTimeout(DS.timer);DS.timer=null;}}
+function _bDrag(sx,idx){
+  DS.on=true;DS.idx=idx;DS.target=idx;if(navigator.vibrate)navigator.vibrate(45);
+  const el=(_cThumbs||document.querySelectorAll('.sthumb'))[idx];if(!el)return;
+  const r=el.getBoundingClientRect();DS.offX=sx-r.left;
+  const c=el.cloneNode(true);c.id='drag-ghost';
+  Object.assign(c.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',zIndex:'99999',pointerEvents:'none',opacity:'0.9',transform:'scale(1.1) translateY(-7px)',boxShadow:'0 8px 24px rgba(0,0,0,.45)',borderRadius:'8px'});
+  document.body.appendChild(c);DS.ghost=c;el.classList.add('being-dragged');
+  document.addEventListener('touchmove',_dMove,{passive:false});
+  document.addEventListener('touchend',_dEnd);document.addEventListener('touchcancel',_dEnd);
+}
+function _dMove(e){
+  e.preventDefault();const tx=e.touches[0].clientX;
+  if(DS.ghost)DS.ghost.style.left=(tx-DS.offX)+'px';
+  const th=_cThumbs||document.querySelectorAll('.sthumb');
+  let t=DS.target,minD=Infinity;
+  th.forEach((el,i)=>{const r=el.getBoundingClientRect(),d=Math.abs(tx-(r.left+r.width/2));if(d<minD){minD=d;t=i;}});
+  if(t!==DS.target){DS.target=t;th.forEach((el,i)=>el.classList.toggle('drop-here',i===t&&i!==DS.idx));}
+}
+function _dEnd(){
+  document.removeEventListener('touchmove',_dMove);document.removeEventListener('touchend',_dEnd);document.removeEventListener('touchcancel',_dEnd);
+  if(DS.ghost){DS.ghost.remove();DS.ghost=null;}
+  (_cThumbs||document.querySelectorAll('.sthumb')).forEach(el=>el.classList.remove('being-dragged','drop-here'));
+  if(DS.on&&DS.target>=0&&DS.target!==DS.idx){_dragEnd=Date.now();const m=photos.splice(DS.idx,1)[0];photos.splice(DS.target,0,m);_openId=null;renderAll();renderPrint();updateCounts();if(navigator.vibrate)navigator.vibrate(30);}
+  DS.on=false;DS.idx=-1;DS.target=-1;
+}
+
+
+// ── PCマウスドラッグ ──
+function stripMS(e,idx){
+  if(e.button!==0)return;
+  e.preventDefault();
+  const sx=e.clientX;let moved=false;
+  function move(me){
+    if(!moved&&Math.abs(me.clientX-sx)>4){
+      moved=true;
+      document.removeEventListener('mousemove',move);
+      document.removeEventListener('mouseup',up);
+      _bDragMouse(sx,idx);
+      document.addEventListener('mousemove',_dMoveMouse);
+      document.addEventListener('mouseup',_dEndMouse);
+    }
+  }
+  function up(){document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);}
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+}
+function _bDragMouse(sx,idx){
+  DS.on=true;DS.idx=idx;DS.target=idx;
+  const el=(_cThumbs||document.querySelectorAll('.sthumb'))[idx];if(!el)return;
+  const r=el.getBoundingClientRect();DS.offX=sx-r.left;
+  const c=el.cloneNode(true);c.id='drag-ghost';
+  Object.assign(c.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',
+    zIndex:'99999',pointerEvents:'none',opacity:'0.92',transform:'scale(1.1) translateY(-7px)',
+    boxShadow:'0 8px 24px rgba(0,0,0,.45)',borderRadius:'8px',cursor:'grabbing'});
+  document.body.appendChild(c);DS.ghost=c;el.classList.add('being-dragged');
+}
+function _dMoveMouse(e){
+  const mx=e.clientX;if(DS.ghost)DS.ghost.style.left=(mx-DS.offX)+'px';
+  const th=_cThumbs||document.querySelectorAll('.sthumb');
+  let t=DS.target,minD=Infinity;
+  th.forEach((el,i)=>{const r=el.getBoundingClientRect(),d=Math.abs(mx-(r.left+r.width/2));if(d<minD){minD=d;t=i;}});
+  if(t!==DS.target){DS.target=t;th.forEach((el,i)=>el.classList.toggle('drop-here',i===t&&i!==DS.idx));}
+}
+function _dEndMouse(){
+  document.removeEventListener('mousemove',_dMoveMouse);
+  document.removeEventListener('mouseup',_dEndMouse);
+  if(DS.ghost){DS.ghost.remove();DS.ghost=null;}
+  (_cThumbs||document.querySelectorAll('.sthumb')).forEach(el=>el.classList.remove('being-dragged','drop-here'));
+  if(DS.on&&DS.target>=0&&DS.target!==DS.idx){_dragEnd=Date.now();const m=photos.splice(DS.idx,1)[0];photos.splice(DS.target,0,m);_openId=null;renderAll();renderPrint();updateCounts();}
+  DS.on=false;DS.idx=-1;DS.target=-1;
+}
+// ── サムネイル帯 ──
+function renderStrip(){
+  _cThumbs=null;const sw=g('strip-wrap'),s=g('strip');
+  if(!photos.length){sw.style.display='none';return;}
+  sw.style.display='block';
+  s.innerHTML=photos.map((p,i)=>{
+    let img;
+    if(p.type==='blank')img=`<div class="blanktile">□</div>`;
+    else if(p.isMap)img=`<div class="maptile"><i class="ti ti-map-2" style="color:var(--green);font-size:18px"></i></div>`;
+    else img=`<img src="${p.url||''}" alt="">`;
+    const lbl=p.type==='blank'?'空白':((p.title||'').split('\n')[0]||`写真${i+1}`);
+    return`<div class="sthumb" ontouchstart="stripTS(event,${i})" onmousedown="stripMS(event,${i})" oncontextmenu="return false" onclick="if(Date.now()-_dragEnd>300)openLb(${i})">
+      <div class="sthumb-img">${img}<div class="sthumb-badge">${i+1}</div>${p.gps?'<div class="sthumb-gps"></div>':''}</div>
+      <div class="sthumb-lbl">${esc(lbl)}</div></div>`;
+  }).join('');
+  _cThumbs=[...s.querySelectorAll('.sthumb')];
+}
+
+// ── カードリスト (最小DOM) ──
+function renderList(){
+  const frag=document.createDocumentFragment();
+  photos.forEach((p,i)=>{
+    const pn=Math.ceil((i+1)/3),cn=(i%3)+1;
+    const title=p.title.split('\n')[0]||'';
+    const card=document.createElement('div');
+    let cls='pcard';
+    if(p.type==='blank')cls+=' blank-card';
+    else if(p.isMap)cls+=' ismap';
+    else if(p.fromSave)cls+=' loaded';
+    card.className=cls;card.id='card-'+p.id;card.dataset.id=p.id;
+    let gpsDot='';
+    if(p.gpsState==='ok'||p.gpsState==='map')gpsDot='<span class="gps-dot ok"></span>';
+    else if(p.gpsState==='loading')gpsDot='<span class="gps-dot ld"></span>';
+    let thumbEl;
+    if(p.type==='blank')thumbEl=`<div class="pblanktile">□</div>`;
+    else if(p.isMap)thumbEl=`<div class="pmapthumb" data-action="photo"><i class="ti ti-map-2" style="color:var(--green)"></i></div>`;
+    else thumbEl=`<div class="pthumb" data-action="photo"><img src="${p.url||''}" alt=""></div>`;
+    const mainLabel=p.type==='blank'?'<span style="color:var(--t3);font-size:13px">空白スペース</span>':`<span class="ptitle${title?'':' empty'}">${esc(title)||'（未設定）'}</span>`;
+    const subText=p.type==='blank'?'ページ調整用の空白':p.route+' · '+p.date;
+    const chevron=`<span class="pchev">›</span>`;
+    card.innerHTML=`<div class="pcard-hd">${thumbEl}<div class="pinfo"><div class="pl1"><span class="pnum">${i+1}</span><span class="ppg">P${pn}-${cn}</span>${p.fromSave?'<span class="loaded-badge">読込</span>':''}${mainLabel}</div><div class="pl2"><span class="pl2-text">${esc(subText)}</span>${gpsDot}</div></div><div class="pcard-r"><button class="prmbtn">×</button>${chevron}</div></div><div class="pcard-edit"></div>`;
+    frag.appendChild(card);
+  });
+  const el=g('plist');el.innerHTML='';el.appendChild(frag);
+}
+function renderAll(){renderStrip();renderList();}
+
+// ── ファイル追加 (一括→1回描画) ──
+async function handleFiles(files){
+  const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));if(!arr.length)return;
+  const newItems=arr.map(f=>({id:++uid,type:'photo',url:URL.createObjectURL(f),file:f,name:f.name,date:dv('dd'),route:dv('dr'),koushu:dv('dk'),title:'',gps:null,gpsState:'loading',manLat:'',manLon:'',isMap:false,mapSvg:null,aiDone:false}));
+  photos.push(...newItems);renderAll();renderPrint();updateCounts();
+  for(const p of newItems){
+    const ex=await readExifData(p.file);p.gps=ex.gps||null;p.gpsState=ex.gps?'ok':'none';
+    if(ex.dt){const fd=fmtDate(ex.dt);if(fd){p.date=fd;upd(p.id,'date',fd);}}
+    _patchGPS(p.id);
+  }
+  renderStrip();
+}
+function _patchGPS(id){
+  const p=photos.find(x=>x.id===id);const card=g('card-'+id);if(!p||!card)return;
+  const pl2=card.querySelector('.pl2');if(!pl2)return;
+  let dot='';if(p.gpsState==='ok')dot='<span class="gps-dot ok"></span>';
+  const txt=pl2.querySelector('.pl2-text');pl2.innerHTML='';if(txt)pl2.appendChild(txt);if(dot)pl2.insertAdjacentHTML('beforeend',dot);
+  if(card.classList.contains('open')&&card.querySelector('.pcard-edit')?.dataset.init)card.querySelector('.pcard-edit').innerHTML=buildEdit(p);
+}
+function removePhoto(id){const p=photos.find(x=>x.id===id);if(p?.url?.startsWith('blob:'))URL.revokeObjectURL(p.url);photos=photos.filter(x=>x.id!==id);if(_openId===id)_openId=null;renderAll();renderPrint();updateCounts();}
+function insertMap(photoId){
+  const p=photos.find(x=>x.id===photoId);if(!p)return;
+  const lat=p.gps?p.gps.lat:parseFloat(p.manLat),lon=p.gps?p.gps.lon:parseFloat(p.manLon);
+  if(!lat||!lon||isNaN(lat)||isNaN(lon)){alert('有効な座標を入力してください');return;}
+  const mp={id:++uid,type:'map',url:null,mapSvg:genMapSVG(lat,lon),file:null,name:'map.svg',date:p.date,route:p.route,koushu:p.koushu,title:'施工位置図',gps:{lat,lon},gpsState:'map',isMap:true,manLat:'',manLon:'',aiDone:false};
+  photos.splice(photos.indexOf(p),0,mp);_openId=null;renderAll();renderPrint();updateCounts();
+}
+function applyAll(){const d=dv('dd'),r=dv('dr'),k=dv('dk');photos.forEach(p=>{p.date=d;p.route=r;p.koushu=k;});renderAll();renderPrint();}
+function updateCounts(){const n=photos.length,pg=Math.ceil(n/3);g('clabel').textContent=n>0?n+'枚 '+pg+'P':'';g('prbtn').disabled=n===0;g('pvbtn').style.display=n>0?'':'none';g('empty').style.display=n===0?'':'none';g('plist').style.display=n===0?'none':'';}
+function doPrint(){if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!confirm('印刷画面が開きます。\nPDF保存: 印刷画面 → 共有 → ファイルに保存'))return;window.print();}
+
+// ── EXIF ──
+async function readExifData(f){try{const b=new Uint8Array(await f.arrayBuffer());if(b[0]!==0xFF||b[1]!==0xD8)return{};let p=2;while(p<b.length-4){if(b[p]!==0xFF)break;const m=b[p+1],sl=(b[p+2]<<8)|b[p+3];if(m===0xE1&&b[p+4]===0x45&&b[p+5]===0x78&&b[p+6]===0x69&&b[p+7]===0x66)return _tiff(b,p+10);if(m===0xDA)break;p+=2+sl;}}catch(e){}return{};}
+function _tiff(b,ts){const le=b[ts]===0x49;const r16=o=>le?(b[ts+o]|b[ts+o+1]<<8):(b[ts+o]<<8|b[ts+o+1]);const r32=o=>{const v=le?(b[ts+o]|b[ts+o+1]<<8|b[ts+o+2]<<16|b[ts+o+3]<<24):(b[ts+o]<<24|b[ts+o+1]<<16|b[ts+o+2]<<8|b[ts+o+3]);return v>>>0;};const res={};const i0=r32(4),n0=r16(i0);let ep=0,gp=0;for(let i=0;i<n0;i++){const e=i0+2+i*12,t=r16(e);if(t===0x8769)ep=r32(e+8);else if(t===0x8825)gp=r32(e+8);else if(t===0x0132){const o=r32(e+8);res.dt=String.fromCharCode(...b.slice(ts+o,ts+o+19));}}if(ep){const ne=r16(ep);for(let i=0;i<ne;i++){const e=ep+2+i*12;if(r16(e)===0x9003){const o=r32(e+8);res.dt=String.fromCharCode(...b.slice(ts+o,ts+o+19));}}}if(gp){const ng=r16(gp);let lr='N',lo='E',lat=null,lon=null;for(let i=0;i<ng;i++){const e=gp+2+i*12,t=r16(e);if(t===1)lr=String.fromCharCode(b[ts+e+8]);else if(t===3)lo=String.fromCharCode(b[ts+e+8]);else if(t===2||t===4){const o=r32(e+8);const[n1,d1,n2,d2,n3,d3]=[r32(o),r32(o+4),r32(o+8),r32(o+12),r32(o+16),r32(o+20)];const dec=(d1?n1/d1:0)+(d2?n2/d2:0)/60+(d3?n3/d3:0)/3600;if(t===2)lat=dec;else lon=dec;}}if(lat!=null&&lon!=null){if(lr==='S')lat=-lat;if(lo==='W')lon=-lon;res.gps={lat,lon};}}return res;}
+function fmtDate(dt){const m=dt?.match(/^(\d{4}):(\d{2}):(\d{2})/);return m?`${m[1]}年${+m[2]}月${+m[3]}日`:'';}
+
+// ── 地図SVG ──
+function genMapSVG(lat,lon){const Z=15,W=580,H=400,T=256;const lf=lo=>(lo+180)/360*(1<<Z),tf=la=>(1-Math.log(Math.tan(la*Math.PI/180)+1/Math.cos(la*Math.PI/180))/Math.PI)/2*(1<<Z);const cx=lf(lon),cy=tf(lat),x0=cx-W/(2*T),y0=cy-H/(2*T);const tx0=Math.floor(x0),ty0=Math.floor(y0),tx1=Math.ceil(x0+W/T),ty1=Math.ceil(y0+H/T);const S=['a','b','c'];let si=0,imgs='';for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){const s=S[si++%3],dx=Math.round((tx-x0)*T),dy=Math.round((ty-y0)*T);imgs+=`<image href="https://${s}.tile.openstreetmap.org/${Z}/${tx}/${ty}.png" x="${dx}" y="${dy}" width="${T}" height="${T}"/>"`;}const mx=W/2,my=H/2,lx=mx+18,ly=my-27;return`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="background:#e8e2d8;display:block">${imgs}<circle cx="${mx}" cy="${my}" r="11" fill="#cc1c1c" stroke="white" stroke-width="2.5"/><line x1="${mx+9}" y1="${my-5}" x2="${lx+2}" y2="${ly+15}" stroke="#cc1c1c" stroke-width="1.5"/><rect x="${lx-4}" y="${ly-3}" width="62" height="22" rx="3" fill="white" stroke="#cc1c1c" stroke-width="1.5"/><text x="${lx+2}" y="${ly+13}" fill="#cc1c1c" font-size="13" font-weight="bold" font-family="Hiragino Kaku Gothic ProN,sans-serif">施工箇所</text></svg>`;}
+
+// ── AI黒板読取 ──
+async function readBoard(id){
+  const p=photos.find(x=>x.id===id);if(!p)return;
+  const btn=g('plist').querySelector(`#card-${id} [data-action="ai"]`);if(btn){btn.innerHTML='<i class="ti ti-loader"></i> 読取中...';btn.disabled=true;}
+  try{
+    const b64=await new Promise(res=>{const img=new Image();img.onload=()=>{const cv=document.createElement('canvas');const mW=800;let w=img.naturalWidth,h=img.naturalHeight,r=Math.min(mW/w,1);w=Math.round(w*r);h=Math.round(h*r);cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',.8).split(',')[1]);};img.onerror=()=>res(null);img.src=p.url||'';});
+    if(!b64)throw new Error('画像読込失敗');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'建設現場写真の黒板から情報を読み取りJSONのみ出力。{"koushu":"工種","title":"写真説明","route":"路線番号(なければ空)"}'}]}]})});
+    const data=await resp.json();const txt=(data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');
+    const info=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    if(info.koushu)upd(id,'koushu',info.koushu);if(info.title)upd(id,'title',info.title);if(info.route)upd(id,'route',info.route);
+    p.aiDone=true;if(btn){btn.innerHTML='<i class="ti ti-sparkles"></i> AI読取 ✓';btn.disabled=true;}
+  }catch(e){if(btn){btn.innerHTML='<i class="ti ti-sparkles"></i> AI読取';btn.disabled=false;}}
+}
+
+// ── ライトボックス ──
+function openLb(idx){lbIdx=Math.max(0,Math.min(idx,photos.length-1));_lbShow();g('lb').style.display='flex';}
+function closeLb(){g('lb').style.display='none';}
+function lbNav(d){lbIdx=(lbIdx+d+photos.length)%photos.length;_lbShow();}
+function _lbShow(){const p=photos[lbIdx];if(!p)return;g('lb-cnt').textContent=(lbIdx+1)+' / '+photos.length;const img=g('lb-img'),svg=g('lb-svg');if(p.isMap){img.style.display='none';svg.style.display='flex';svg.innerHTML=p.mapSvg||'';}else if(p.type==='blank'){img.style.display='none';svg.style.display='flex';svg.innerHTML='<div style="color:#ccc;font-size:48px;text-align:center">□<br><span style="font-size:16px">空白スペース</span></div>';}else{svg.style.display='none';img.style.display='block';img.src=p.url||'';}g('lb-ttl').textContent=p.type==='blank'?'空白スペース':p.title||'（タイトルなし）';g('lb-rt').innerHTML=`<i class="ti ti-route"></i> ${esc(p.route||'—')}`;g('lb-dt').innerHTML=`<i class="ti ti-calendar"></i> ${esc(p.date||'—')}`;const gps=g('lb-gps');if(p.gps){gps.style.display='';gps.innerHTML=`<i class="ti ti-map-pin"></i> N${p.gps.lat.toFixed(4)}`;}else gps.style.display='none';}
+function goEdit(){closeLb();setTimeout(()=>{const c=g('card-'+photos[lbIdx]?.id);if(c){c.scrollIntoView({behavior:'smooth',block:'start'});if(photos[lbIdx]?.type!=='blank')toggleExpand(photos[lbIdx].id);}},100);}
+function lbTS(e){lbTX=e.touches[0].clientX;}
+function lbTE(e){if(Math.abs(e.changedTouches[0].clientX-lbTX)>45)lbNav(e.changedTouches[0].clientX<lbTX?1:-1);}
+
+// ── ② プレビュー: 1ページずつ・画面フィット ──
+function showPV(){pvCur=0;_pvRender();g('ovl').style.display='flex';}
+function pvNav(d){const tot=Math.ceil(photos.length/3);pvCur=Math.max(0,Math.min(pvCur+d,tot-1));_pvRender();}
+function _pvRender(){
+  const tot=Math.ceil(photos.length/3);
+  const page=photos.slice(pvCur*3,pvCur*3+3);
+  const availW=Math.max(200,Math.min(window.innerWidth-20,560));
+  const S=availW/210;
+  const pgH=Math.round(297*S),pad=Math.round(8*S),gap=Math.round(5*S);
+  const cH=Math.floor((pgH-pad*2-gap*2)/3);
+  const r=Math.round(9*S),lb=41,tH=Math.max(1,cH-r*5);
+  const fs=px=>`${Math.max(5,Math.round(px))}px`;
+  const rs=`display:flex;border-bottom:1px solid #333;flex-shrink:0;height:${r}px`;
+  const ls=`width:${lb}%;flex-shrink:0;border-right:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;font-size:${fs(3*S)};white-space:pre;line-height:1.4;padding:1px`;
+  const vs=`flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:${fs(3.4*S)};white-space:pre-line;line-height:1.3;padding:1px`;
+  const pg=document.createElement('div');
+  pg.style.cssText=`width:${availW}px;background:#808080;display:flex;flex-direction:column;padding:${pad}px;gap:${gap}px;flex-shrink:0`;
+  [0,1,2].forEach(ci=>{
+    const p=page[ci],c=document.createElement('div');
+    c.style.cssText=`display:flex;gap:${Math.round(3*S)}px;height:${cH}px;overflow:hidden`;
+    if(p){
+      let ph;
+      if(p.type==='blank')ph=`<div style="flex:0 0 63.5%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:32px">□</div>`;
+      else if(p.isMap)ph=`<div style="flex:0 0 63.5%;overflow:hidden">${p.mapSvg||''}</div>`;
+      else ph=`<div style="flex:0 0 63.5%;overflow:hidden"><img src="${p.url||''}" style="width:100%;height:100%;object-fit:cover;display:block" alt=""></div>`;
+      c.innerHTML=`${ph}<div style="flex:1;border:1.5px solid #111;background:white;display:flex;flex-direction:column;overflow:hidden;font-family:Hiragino Kaku Gothic ProN,sans-serif"><div style="${rs}"><div style="${ls}">工　　種</div><div style="${vs}">${esc(p.koushu)}</div></div><div style="flex:0 0 ${tH}px;display:flex;border-bottom:1px solid #333;overflow:hidden"><div style="${ls};font-size:${fs(2.8*S)};line-height:1.8">写　真\nタイトル</div><div style="${vs};font-size:${fs(4*S)}">${esc(p.title)}</div></div><div style="${rs}"><div style="${ls}">路線番号</div><div style="${vs}">${esc(p.route)}</div></div><div style="${rs}"><div style="${ls}">撮影月日</div><div style="${vs}">${esc(p.date)}</div></div><div style="${rs}"><div style="${ls}"></div></div><div style="display:flex;flex:1"><div style="width:${lb}%;border-right:1px solid #333"></div></div></div>`;
+    }else{
+      c.innerHTML=`<div style="flex:0 0 63.5%;background:#ccc"></div><div style="flex:1;border:1.5px solid #111;background:#f5f5f5"></div>`;
+    }
+    pg.appendChild(c);
+  });
+  const wrap=g('ovl-page');wrap.innerHTML='';wrap.appendChild(pg);wrap.scrollTop=0;
+  g('ovl-cnt').textContent=`${pvCur+1} ページ目 / 全${tot}ページ`;
+  g('ovl-prev').disabled=pvCur===0;
+  g('ovl-next').disabled=pvCur>=tot-1;
+}
+
+// ── データ管理 ──
+function getMonth(){const d=photos.find(p=>p.date)?.date;if(d){const m=d.match(/(\d{4})年(\d+)月/);if(m)return`${m[1]}年${m[2]}月`;}const n=new Date();return`${n.getFullYear()}年${n.getMonth()+1}月`;}
+async function compress(url){return new Promise(res=>{const img=new Image();img.onload=()=>{const mW=1000,mH=750;let w=img.naturalWidth,h=img.naturalHeight,r=Math.min(mW/w,mH/h,1);w=Math.round(w*r);h=Math.round(h*r);const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',.75));};img.onerror=()=>res(null);img.src=url;});}
+async function saveData(){
+  if(!photos.length){alert('保存するデータがありません');return;}
+  const dflt=`写真帳_${getMonth()}`;const inp=window.prompt('ファイル名を入力してください（.json は自動追加）',dflt);if(inp===null)return;
+  const fname=(inp.trim()||dflt).replace(/[\/\\:*?"<>|]/g,'_').replace(/\.json$/i,'')+'.json';
+  showProg('保存中...');g('savebtn').disabled=true;
+  try{
+    const saved=[];
+    for(let i=0;i<photos.length;i++){
+      const p=photos[i];g('prog-msg').textContent=`保存中 ${i+1}/${photos.length}枚...`;
+      saved.push({type:p.type||'photo',name:p.name,date:p.date,route:p.route,koushu:p.koushu,title:p.title,gps:p.gps,isMap:p.isMap,dataUrl:p.type==='blank'?null:p.isMap?null:(p.url?await compress(p.url):null),mapSvg:p.isMap?p.mapSvg:null});
+      if(i%3===2)await new Promise(r=>setTimeout(r,0));
+    }
+    const blob=new Blob([JSON.stringify({version:'1.2',savedAt:new Date().toISOString(),month:getMonth(),photos:saved})],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  }finally{g('savebtn').disabled=false;hideProg();}
+}
+async function onLoadFile(file){
+  if(!file)return;showProg('読み込み中...');
+  try{
+    const text=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsText(file);});
+    const data=JSON.parse(text);if(!data.photos||!Array.isArray(data.photos))throw new Error('ファイル形式が正しくありません');
+    if(photos.length&&!confirm(`現在のデータ(${photos.length}枚)を削除して読み込みますか？`)){hideProg();return;}
+    photos=data.photos.map(p=>({id:++uid,type:p.type||'photo',url:p.type==='blank'?null:p.isMap?null:(p.dataUrl||null),file:null,name:p.name||'photo.jpg',date:p.date||'',route:p.route||'',koushu:p.koushu||'',title:p.title||'',gps:p.gps||null,gpsState:p.gps?'ok':(p.isMap?'map':'none'),isMap:p.isMap||false,mapSvg:p.mapSvg||null,manLat:'',manLon:'',aiDone:false,fromSave:true}));
+    _openId=null;renderAll();renderPrint();updateCounts();
+  }catch(err){alert('読込失敗: '+err.message);}finally{hideProg();}
+}
+// ① XLSX遅延読み込み (起動速度改善)
+async function exportExcel(){
+  if(!photos.length){alert('データがありません');return;}
+  if(typeof XLSX==='undefined'){
+    showProg('Excel機能を読み込み中...');
+    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);}).catch(()=>{hideProg();alert('Excel機能の読み込みに失敗しました');return;});
+    hideProg();
+  }
+  const dflt=`写真帳_${getMonth()}`;const inp=window.prompt('Excelファイル名を入力してください（.xlsx は自動追加）',dflt);if(inp===null)return;
+  const rows=[['No.','路線番号','撮影月日','工　種','写真タイトル','GPS緯度','GPS経度','備考']];
+  photos.forEach((p,i)=>rows.push([i+1,p.route,p.date,p.koushu,p.title,p.gps?+p.gps.lat.toFixed(6):'',p.gps?+p.gps.lon.toFixed(6):'',p.type==='blank'?'空白スペース':p.isMap?'施工位置図（自動生成）':'']));
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:5},{wch:10},{wch:16},{wch:12},{wch:25},{wch:12},{wch:12},{wch:20}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'写真一覧');
+  XLSX.writeFile(wb,(inp.trim()||dflt).replace(/[\/\\:*?"<>|]/g,'_').replace(/\.xlsx$/i,'')+'.xlsx');
+}
+
+
+// ── SharePoint 保存 (ダウンロード + SharePoint自動オープン) ──
+function saveSPCfg(){
+  const url=g('sp-url').value.trim();
+  if(!url){alert('SharePoint フォルダのURLを入力してください');return;}
+  localStorage.setItem('sp_url',url);
+  g('sp-cfg').style.display='none';
+  alert('SharePoint設定を保存しました');
+}
+
+async function showSPRoot(){
+  if(!photos.length){alert('保存するデータがありません');return;}
+  const spUrl=localStorage.getItem('sp_url');
+  if(!spUrl){
+    g('sp-url').value='';
+    g('sp-cfg').style.display='flex';
+    return;
+  }
+  const dflt=`写真帳_${getMonth()}`;
+  const inp=window.prompt('ファイル名を入力してください（.json は自動追加）',dflt);
+  if(inp===null)return;
+  const fname=(inp.trim()||dflt).replace(/[\/\\:*?"<>|]/g,'_').replace(/\.json$/i,'')+'.json';
+  showProg('保存中...');
+  try{
+    const saved=[];
+    for(let i=0;i<photos.length;i++){
+      const p=photos[i];g('prog-msg').textContent=`保存中 ${i+1}/${photos.length}枚...`;
+      saved.push({type:p.type||'photo',name:p.name,date:p.date,route:p.route,koushu:p.koushu,title:p.title,gps:p.gps,isMap:p.isMap,
+        dataUrl:p.type==='blank'?null:p.isMap?null:(p.url?await compress(p.url):null),mapSvg:p.isMap?p.mapSvg:null});
+      if(i%3===2)await new Promise(r=>setTimeout(r,0));
+    }
+    const blob=new Blob([JSON.stringify({version:'1.2',savedAt:new Date().toISOString(),month:getMonth(),photos:saved})],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    hideProg();
+    if(confirm('📥 「'+fname+'」をダウンロードしました。\nSharePointフォルダを開きますか？\n（開いたページにファイルをドラッグ＆ドロップしてください）')){
+      window.open(spUrl,'_blank');
+    }
+  }catch(e){hideProg();alert('保存エラー: '+e.message);}
+}
+
+// ── PC: ホイール・キーボード ──
+g('strip').addEventListener('touchmove',onStripTM,{passive:true});
+g('strip').addEventListener('wheel',e=>{const s=g('strip');if(s.scrollWidth>s.clientWidth){e.preventDefault();s.scrollLeft+=e.deltaY;}},{passive:false});
+g('lb-view').addEventListener('wheel',e=>{e.preventDefault();lbNav(e.deltaY>0?1:-1);},{passive:false});
+document.addEventListener('keydown',e=>{if(g('lb').style.display!=='flex')return;if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();lbNav(-1);}if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();lbNav(1);}if(e.key==='Escape')closeLb();});
+
+updateCounts();
+</script>
+</body>
+</html>
